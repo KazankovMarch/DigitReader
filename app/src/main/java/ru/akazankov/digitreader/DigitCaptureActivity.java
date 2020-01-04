@@ -43,8 +43,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.vision.MultiProcessor;
-import com.google.android.gms.vision.barcode.Barcode;
-import com.google.android.gms.vision.barcode.BarcodeDetector;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
@@ -53,13 +51,9 @@ import ru.akazankov.digitreader.ui.camera.CameraSource;
 import ru.akazankov.digitreader.ui.camera.CameraSourcePreview;
 import ru.akazankov.digitreader.ui.camera.GraphicOverlay;
 
-/**
- * Activity for the multi-tracker app.  This app detects barcodes and displays the value with the
- * rear facing camera. During detection overlay graphics are drawn to indicate the position,
- * size, and ID of each barcode.
- */
-public final class BarcodeCaptureActivity extends AppCompatActivity implements BarcodeGraphicTracker.BarcodeUpdateListener {
-    private static final String TAG = "Barcode-reader";
+
+public final class DigitCaptureActivity extends AppCompatActivity implements DigitGraphicTracker.DigitUpdateListener {
+    private static final String TAG = "Digit-reader";
 
     // intent request code to handle updating play services if needed.
     private static final int RC_HANDLE_GMS = 9001;
@@ -70,11 +64,11 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     // constants used to pass extra data in the intent
     public static final String AutoFocus = "AutoFocus";
     public static final String UseFlash = "UseFlash";
-    public static final String BarcodeObject = "Barcode";
+    public static final String DigitObject = "Digit";
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
-    private GraphicOverlay<BarcodeGraphic> mGraphicOverlay;
+    private GraphicOverlay<DigitGraphic> mGraphicOverlay;
 
     // helper objects for detecting taps and pinches.
     private ScaleGestureDetector scaleGestureDetector;
@@ -86,10 +80,10 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        setContentView(R.layout.barcode_capture);
+        setContentView(R.layout.digit_capture);
 
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
-        mGraphicOverlay = (GraphicOverlay<BarcodeGraphic>) findViewById(R.id.graphicOverlay);
+        mGraphicOverlay = (GraphicOverlay<DigitGraphic>) findViewById(R.id.graphicOverlay);
 
         // read parameters from the intent used to launch the activity.
         boolean autoFocus = getIntent().getBooleanExtra(AutoFocus, false);
@@ -156,7 +150,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     /**
      * Creates and starts the camera.  Note that this uses a higher resolution in comparison
-     * to other detection examples to enable the barcode detector to detect small barcodes
+     * to other detection examples to enable the digit detector to detect small digits
      * at long distances.
      *
      * Suppressing InlinedApi since there is a check that the minimum version is met before using
@@ -166,20 +160,20 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     private void createCameraSource(boolean autoFocus, boolean useFlash) {
         Context context = getApplicationContext();
 
-        // A barcode detector is created to track barcodes.  An associated multi-processor instance
-        // is set to receive the barcode detection results, track the barcodes, and maintain
-        // graphics for each barcode on screen.  The factory is used by the multi-processor to
-        // create a separate tracker instance for each barcode.
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).build();
-        BarcodeTrackerFactory barcodeFactory = new BarcodeTrackerFactory(mGraphicOverlay, this);
-        barcodeDetector.setProcessor(
-                new MultiProcessor.Builder<>(barcodeFactory).build());
+        // A digit detector is created to track digits.  An associated multi-processor instance
+        // is set to receive the digit detection results, track the digits, and maintain
+        // graphics for each digit on screen.  The factory is used by the multi-processor to
+        // create a separate tracker instance for each digit.
+        DigitDetector digitDetector = new DigitDetector(context);
+        DigitTrackerFactory digitTrackerFactory = new DigitTrackerFactory(mGraphicOverlay, this);
+        digitDetector.setProcessor(
+                new MultiProcessor.Builder<>(digitTrackerFactory).build());
 
-        if (!barcodeDetector.isOperational()) {
-            // Note: The first time that an app using the barcode or face API is installed on a
+        if (!digitDetector.isOperational()) {
+            // Note: The first time that an app using the digit or face API is installed on a
             // device, GMS will download a native libraries to the device in order to do detection.
             // Usually this completes before the app is run for the first time.  But if that
-            // download has not yet completed, then the above call will not detect any barcodes
+            // download has not yet completed, then the above call will not detect any digits
             // and/or faces.
             //
             // isOperational() can be used to check if the required native libraries are currently
@@ -198,10 +192,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             }
         }
 
-        // Creates and starts the camera.  Note that this uses a higher resolution in comparison
-        // to other detection examples to enable the barcode detector to detect small barcodes
-        // at long distances.
-        CameraSource.Builder builder = new CameraSource.Builder(getApplicationContext(), barcodeDetector)
+        CameraSource.Builder builder = new CameraSource.Builder(getApplicationContext(), digitDetector)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
                 .setRequestedPreviewSize(1600, 1024)
                 .setRequestedFps(15.0f);
@@ -327,7 +318,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     }
 
     /**
-     * onTap returns the tapped barcode result to the calling Activity.
+     * onTap returns the tapped digit result to the calling Activity.
      *
      * @param rawX - the raw position of the tap
      * @param rawY - the raw position of the tap.
@@ -340,28 +331,28 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         float x = (rawX - location[0]) / mGraphicOverlay.getWidthScaleFactor();
         float y = (rawY - location[1]) / mGraphicOverlay.getHeightScaleFactor();
 
-        // Find the barcode whose center is closest to the tapped point.
-        Barcode best = null;
+        // Find the digit whose center is closest to the tapped point.
+        Digit best = null;
         float bestDistance = Float.MAX_VALUE;
-        for (BarcodeGraphic graphic : mGraphicOverlay.getGraphics()) {
-            Barcode barcode = graphic.getBarcode();
-            if (barcode.getBoundingBox().contains((int) x, (int) y)) {
+        for (DigitGraphic graphic : mGraphicOverlay.getGraphics()) {
+            Digit digit = graphic.getDigit();
+            if (digit.getBoundingBox().contains((int) x, (int) y)) {
                 // Exact hit, no need to keep looking.
-                best = barcode;
+                best = digit;
                 break;
             }
-            float dx = x - barcode.getBoundingBox().centerX();
-            float dy = y - barcode.getBoundingBox().centerY();
+            float dx = x - digit.getBoundingBox().centerX();
+            float dy = y - digit.getBoundingBox().centerY();
             float distance = (dx * dx) + (dy * dy);  // actually squared distance
             if (distance < bestDistance) {
-                best = barcode;
+                best = digit;
                 bestDistance = distance;
             }
         }
 
         if (best != null) {
             Intent data = new Intent();
-            data.putExtra(BarcodeObject, best);
+            data.putExtra(DigitObject, best);
             setResult(CommonStatusCodes.SUCCESS, data);
             finish();
             return true;
@@ -431,7 +422,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     }
 
     @Override
-    public void onBarcodeDetected(Barcode barcode) {
-        //do something with barcode data returned
+    public void onDigitDetected(Digit digit) {
+        //do something with digit data returned
     }
 }

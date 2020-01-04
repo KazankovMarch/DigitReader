@@ -20,39 +20,38 @@ import androidx.annotation.UiThread;
 
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Tracker;
-import com.google.android.gms.vision.barcode.Barcode;
 
 import ru.akazankov.digitreader.ui.camera.GraphicOverlay;
 
 /**
- * Generic tracker which is used for tracking or reading a barcode (and can really be used for
+ * Generic tracker which is used for tracking or reading a digit (and can really be used for
  * any type of item).  This is used to receive newly detected items, add a graphical representation
  * to an overlay, update the graphics as the item changes, and remove the graphics when the item
  * goes away.
  */
-public class BarcodeGraphicTracker extends Tracker<Barcode> {
-    private GraphicOverlay<BarcodeGraphic> mOverlay;
-    private BarcodeGraphic mGraphic;
+public class DigitGraphicTracker extends Tracker<Digit> {
+    private GraphicOverlay<DigitGraphic> mOverlay;
+    private DigitGraphic mGraphic;
 
-    private BarcodeUpdateListener mBarcodeUpdateListener;
+    private DigitUpdateListener mDigitUpdateListener;
 
     /**
      * Consume the item instance detected from an Activity or Fragment level by implementing the
-     * BarcodeUpdateListener interface method onBarcodeDetected.
+     * DigitUpdateListener interface method onDigitDetected.
      */
-    public interface BarcodeUpdateListener {
+    public interface DigitUpdateListener {
         @UiThread
-        void onBarcodeDetected(Barcode barcode);
+        void onDigitDetected(Digit digit);
     }
 
-    BarcodeGraphicTracker(GraphicOverlay<BarcodeGraphic> mOverlay, BarcodeGraphic mGraphic,
-                          Context context) {
+    DigitGraphicTracker(GraphicOverlay<DigitGraphic> mOverlay, DigitGraphic mGraphic,
+                        Context context) {
         this.mOverlay = mOverlay;
         this.mGraphic = mGraphic;
-        if (context instanceof BarcodeUpdateListener) {
-            this.mBarcodeUpdateListener = (BarcodeUpdateListener) context;
+        if (context instanceof DigitUpdateListener) {
+            this.mDigitUpdateListener = (DigitUpdateListener) context;
         } else {
-            throw new RuntimeException("Hosting activity must implement BarcodeUpdateListener");
+            throw new RuntimeException("Hosting activity must implement DigitUpdateListener");
         }
     }
 
@@ -60,16 +59,16 @@ public class BarcodeGraphicTracker extends Tracker<Barcode> {
      * Start tracking the detected item instance within the item overlay.
      */
     @Override
-    public void onNewItem(int id, Barcode item) {
+    public void onNewItem(int id, Digit item) {
         mGraphic.setId(id);
-        mBarcodeUpdateListener.onBarcodeDetected(item);
+        mDigitUpdateListener.onDigitDetected(item);
     }
 
     /**
      * Update the position/characteristics of the item within the overlay.
      */
     @Override
-    public void onUpdate(Detector.Detections<Barcode> detectionResults, Barcode item) {
+    public void onUpdate(Detector.Detections<Digit> detectionResults, Digit item) {
         mOverlay.add(mGraphic);
         mGraphic.updateItem(item);
     }
@@ -80,7 +79,7 @@ public class BarcodeGraphicTracker extends Tracker<Barcode> {
      * view.
      */
     @Override
-    public void onMissing(Detector.Detections<Barcode> detectionResults) {
+    public void onMissing(Detector.Detections<Digit> detectionResults) {
         mOverlay.remove(mGraphic);
     }
 

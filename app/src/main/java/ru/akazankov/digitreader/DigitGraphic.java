@@ -20,15 +20,14 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 
-import com.google.android.gms.vision.barcode.Barcode;
 
 import ru.akazankov.digitreader.ui.camera.GraphicOverlay;
 
 /**
- * Graphic instance for rendering barcode position, size, and ID within an associated graphic
+ * Graphic instance for rendering digit position, size, and ID within an associated graphic
  * overlay view.
  */
-public class BarcodeGraphic extends GraphicOverlay.Graphic {
+public class DigitGraphic extends GraphicOverlay.Graphic {
 
     private int mId;
 
@@ -42,9 +41,9 @@ public class BarcodeGraphic extends GraphicOverlay.Graphic {
 
     private Paint mRectPaint;
     private Paint mTextPaint;
-    private volatile Barcode mBarcode;
+    private volatile Digit mDigit;
 
-    BarcodeGraphic(GraphicOverlay overlay) {
+    DigitGraphic(GraphicOverlay overlay) {
         super(overlay);
 
         mCurrentColorIndex = (mCurrentColorIndex + 1) % COLOR_CHOICES.length;
@@ -68,38 +67,38 @@ public class BarcodeGraphic extends GraphicOverlay.Graphic {
         this.mId = id;
     }
 
-    public Barcode getBarcode() {
-        return mBarcode;
+    public Digit getDigit() {
+        return mDigit;
     }
 
     /**
-     * Updates the barcode instance from the detection of the most recent frame.  Invalidates the
+     * Updates the digit instance from the detection of the most recent frame.  Invalidates the
      * relevant portions of the overlay to trigger a redraw.
      */
-    void updateItem(Barcode barcode) {
-        mBarcode = barcode;
+    void updateItem(Digit digit) {
+        mDigit = digit;
         postInvalidate();
     }
 
     /**
-     * Draws the barcode annotations for position, size, and raw value on the supplied canvas.
+     * Draws the digit annotations for position, size, and raw value on the supplied canvas.
      */
     @Override
     public void draw(Canvas canvas) {
-        Barcode barcode = mBarcode;
-        if (barcode == null) {
+        Digit digit = mDigit;
+        if (digit == null) {
             return;
         }
 
-        // Draws the bounding box around the barcode.
-        RectF rect = new RectF(barcode.getBoundingBox());
+        // Draws the bounding box around the digit.
+        RectF rect = new RectF(digit.getBoundingBox());
         rect.left = translateX(rect.left);
         rect.top = translateY(rect.top);
         rect.right = translateX(rect.right);
         rect.bottom = translateY(rect.bottom);
         canvas.drawRect(rect, mRectPaint);
 
-        // Draws a label at the bottom of the barcode indicate the barcode value that was detected.
-        canvas.drawText(barcode.rawValue, rect.left, rect.bottom, mTextPaint);
+        // Draws a label at the bottom of the digit indicate the digit value that was detected.
+        canvas.drawText(digit.rawValue, rect.left, rect.bottom, mTextPaint);
     }
 }
