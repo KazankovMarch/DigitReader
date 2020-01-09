@@ -31,12 +31,6 @@ public class DigitGraphic extends GraphicOverlay.Graphic {
 
     private int mId;
 
-    private static final int COLOR_CHOICES[] = {
-            Color.BLUE,
-            Color.CYAN,
-            Color.GREEN
-    };
-
     private static int mCurrentColorIndex = 0;
 
     private Paint mRectPaint;
@@ -46,8 +40,7 @@ public class DigitGraphic extends GraphicOverlay.Graphic {
     DigitGraphic(GraphicOverlay overlay) {
         super(overlay);
 
-        mCurrentColorIndex = (mCurrentColorIndex + 1) % COLOR_CHOICES.length;
-        final int selectedColor = COLOR_CHOICES[mCurrentColorIndex];
+        final int selectedColor = Color.GREEN;
 
         mRectPaint = new Paint();
         mRectPaint.setColor(selectedColor);
@@ -56,7 +49,7 @@ public class DigitGraphic extends GraphicOverlay.Graphic {
 
         mTextPaint = new Paint();
         mTextPaint.setColor(selectedColor);
-        mTextPaint.setTextSize(36.0f);
+        mTextPaint.setTextSize(300.0f);
     }
 
     public int getId() {

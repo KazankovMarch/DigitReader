@@ -38,7 +38,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private TextView statusMessage;
     private TextView digitValue;
 
-    private static final int RC_BARCODE_CAPTURE = 9001;
+    private static final int RC_DIGIT_CAPTURE = 9001;
     private static final String TAG = "DigitMain";
 
     @Override
@@ -68,7 +68,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             intent.putExtra(DigitCaptureActivity.AutoFocus, autoFocus.isChecked());
             intent.putExtra(DigitCaptureActivity.UseFlash, useFlash.isChecked());
 
-            startActivityForResult(intent, RC_BARCODE_CAPTURE);
+            startActivityForResult(intent, RC_DIGIT_CAPTURE);
         }
 
     }
@@ -97,7 +97,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == RC_BARCODE_CAPTURE) {
+        if (requestCode == RC_DIGIT_CAPTURE) {
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 if (data != null) {
                     Digit digit = data.getParcelableExtra(DigitCaptureActivity.DigitObject);
