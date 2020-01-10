@@ -29,20 +29,19 @@ public class Digit extends AbstractSafeParcelable {
     }
 
     public Rect getBoundingBox() {
-        int var1 = 2147483647;
-        int var2 = -2147483648;
-        int var3 = 2147483647;
-        int var4 = -2147483648;
+        int x1 = 2147483647;
+        int x2 = -2147483648;
+        int y1 = 2147483647;
+        int y2 = -2147483648;
 
-        for(int var5 = 0; var5 < this.cornerPoints.length; ++var5) {
-            Point var6 = this.cornerPoints[var5];
-            var1 = Math.min(var1, var6.x);
-            var2 = Math.max(var2, var6.x);
-            var3 = Math.min(var3, var6.y);
-            var4 = Math.max(var4, var6.y);
+        for (Point point : this.cornerPoints) {
+            x1 = Math.min(x1, point.x);
+            x2 = Math.max(x2, point.x);
+            y1 = Math.min(y1, point.y);
+            y2 = Math.max(y2, point.y);
         }
 
-        return new Rect(var1, var3, var2, var4);
+        return new Rect(x1, y1, x2, y2);
     }
 
 
