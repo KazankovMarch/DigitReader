@@ -24,7 +24,6 @@ import java.io.InputStream;
 public class DigitDetector extends Detector<Digit> {
     private static final int SQUARE_WIDTH = 28;
 
-    private Context context;
     private Interpreter interpreter;
     private float[][][][] dataForModel = new float[1][SQUARE_WIDTH][SQUARE_WIDTH][1];
     private float[][] output = new float[1][10];
@@ -32,7 +31,6 @@ public class DigitDetector extends Detector<Digit> {
     public DigitDetector(Context context) {
 
         try {
-            this.context = context;
             InputStream input = context.getResources().openRawResource(R.raw.mnist_model);
             File model = new File(context.getCacheDir()+ File.separator+"model.tflite");
             model.createNewFile();
@@ -66,7 +64,7 @@ public class DigitDetector extends Detector<Digit> {
             int min = Math.min(width,height);
 
             try {
-                Bitmap bitmap = null;
+                Bitmap bitmap = frame.getBitmap();
                 if(bitmap==null) {
                     YuvImage yuvImage = new YuvImage(frame.getGrayscaleImageData().array(),
                             ImageFormat.NV21, width, height, null);
@@ -76,11 +74,7 @@ public class DigitDetector extends Detector<Digit> {
                     bitmap = BitmapFactory.decodeByteArray(jpegArray, 0, jpegArray.length);
                 }
 
-                try {
-                    interpreter.run(getDataForModel(frame, bitmap), output);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                interpreter.run(getDataForModel(frame, bitmap), output);
 
                 SparseArray<Digit> resultArray = new SparseArray<>();
 
@@ -106,6 +100,9 @@ public class DigitDetector extends Detector<Digit> {
     }
 
     private int[] buffer;
+    /**
+     * compressing colored bitmap to 28x28 array of grayscale values 0..1
+     * */
     private float[][][][] getDataForModel(Frame frame, Bitmap bitmap) {
         int pixelPerPixel = Math.min(frame.getMetadata().getWidth(), frame.getMetadata().getHeight()) / SQUARE_WIDTH;
         if(buffer == null)
@@ -113,8 +110,7 @@ public class DigitDetector extends Detector<Digit> {
 
         for(int i = 0; i < SQUARE_WIDTH; i++) {
             for (int j = 0; j < SQUARE_WIDTH; j++) {
-                bitmap.getPixels(buffer, 0, pixelPerPixel,
-                        i*pixelPerPixel, j*pixelPerPixel, pixelPerPixel, pixelPerPixel);
+                bitmap.getPixels(buffer, 0, pixelPerPixel, i*pixelPerPixel, j*pixelPerPixel, pixelPerPixel, pixelPerPixel);
                 dataForModel[0][i][SQUARE_WIDTH - j - 1][0] = getNormalizedAvgGrayScale(buffer);
             }
         }
@@ -160,5 +156,4 @@ public class DigitDetector extends Detector<Digit> {
         }
         return resultIndex;
     }
-
 }
